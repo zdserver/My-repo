@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+<meta http-equiv="Pragma" content="no-cache"> 
+<meta http-equiv="Cache-Control" content="no-cache"> 
+<meta http-equiv="Expires" content="0"> 
+<title>登录</title>
+<link th:href="@{css/login.css}" href="../static/css/login.css" type="text/css" rel="stylesheet"> 
+<script type="text/javascript" th:src="@{jquery-3.3.1.min.js}" src="../static/jquery-3.3.1.min.js"></script>
+<script type="text/javascript">
+
+	$(function(){
+		$("input[type=button]").on('click',function(){
+			$.ajax({
+				url:"/user/login",
+				data:{
+					username:$('input[name=username]').val(),
+					password:$('input[name=password]').val()
+				},
+				success:function(data){
+					if(data=='OK'){
+						//alert('登录成功！');
+						window.location.href="index";
+					}else{
+						alert('登录失败：'+data);
+					}
+				}
+			});
+		});
+	});	
+	
+</script>
+</head>
+<body> 
+
+<div class="login">
+    <div class="message">医院关系管理系统</div>
+    <div id="darkbannerwrap"></div>
+    
+    <form method="post">
+		<input name="action" value="login" type="hidden">
+		<input name="username" placeholder="用户名" required type="text">
+		<hr class="hr15">
+		<input name="password" placeholder="密码" required type="password">
+		<hr class="hr15">
+		<input value="登录" style="width:100%;" type="button">
+		<hr class="hr20">
+	</form>
+
+	
+</div>
+
+<div class="copyright">@杰普软件</div>
+
+</body>
+</html>

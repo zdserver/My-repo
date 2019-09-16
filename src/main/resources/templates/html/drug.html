@@ -1,0 +1,427 @@
+<script type="text/javascript">
+	$(function(){
+		$.get("selectCategory",{},function(data){
+			for(var i=0;i<data.length;i++){
+				var id = data[i].id;
+				var name = data[i].name;
+				$("#categorySel").append('<option value='+id+'>'+name+'</option>');
+			}
+		});
+		//批量删除
+		$(".deleteBatch").on("click",function(){
+			var ids = $(".dataTable input[type='checkbox']:checked").map(function(index,item){
+				return $(item).val();
+			}).get();
+			jQuery.ajaxSetup({
+				traditional:true// ids数组可以被后台接收到
+			});
+
+			/* $.post("deleteDrug",{ids:ids},function(data){
+				alert(data);
+				$(".menu dd:contains('医用药品信息管理')").trigger("click");
+			}); */
+			var str="";
+			for(i=0;i<ids.length;i++){
+				str=i==ids.length-1?str+ids[i]:str+ids[i]+",";
+			}
+			var result=confirm("确认要删除"+str+"这些药品吗？"); 
+			if(result){
+				$.ajax({
+					url : "/drug",
+					type : "POST",
+					data : {
+						ids : ids,
+						_method : "DELETE"
+					},
+					success : function(data) {
+						alert(data);
+						// 删除成功后，更新页面信息
+						$(".menu dd:contains('医用药品管理')").trigger("click");
+					}
+				});
+			}
+		});
+
+	});
+
+
+
+	function addDrug(){
+		//$(".addBtn").off();
+ 		//添加
+ 		//$(".addBtn").on("click",function(){
+ 			$("#drugForm input[name=id]").val("");
+ 			//清空表单内容
+ 			$("#drugForm input[type=reset]").trigger("click");
+ 			//清空redio选中
+ 			$("#drugForm input[type=radio]").attr("checked",false);
+ 			$("#drugModal").modal('show');
+ 			//修改标题 
+			$(".modal-header .modal-title").text("添加医用药品类别"); 
+ 		//});
+			/* $.get("findAllCategory",{},function(data){
+				for(var i=0;i<data.length;i++){
+					var name = data[i].name;
+					var id = data[i].id;
+					console.log("name",name);
+					console.log("id",id);
+					$("#categorySel").append('<option value='+id+'>'+name+'</option>');
+				}
+				$("#drugModal").modal('show');
+			}); */
+			$(".modal-footer .submitBtn").on("click",function(){
+				$("#drugForm").attr("method","POST");
+				$("#drugForm input:submit").trigger("click");
+			});
+			$("#drugForm").ajaxForm(function(data){
+				$("#drugModal").modal("hide");
+				if (data != 'OK') {
+					alert("操作成功");
+				} else {
+					// 延时加载，防止模态框消失动作冲突
+					setTimeout(function() {
+						$(".menu dd:contains('医用药品管理')").trigger("click");
+					}, 250);
+				}	
+			});
+	}
+	//删除
+	function deleteDrug(id){
+		/* $.post("deleteDrug",{id:id},function(data){
+			alert(data);
+			$(".menu dd:contains('医用药品信息管理')").trigger("click");
+		}); */
+		var result=confirm("确认删除该药品吗？");
+		if(result==true){
+			$.ajax({
+				url : "/drug/" + id,
+				type : "DELETE",
+				success : function(data) {
+					if (data == 'OK') {
+						alert("操作成功！");
+						$(".menu dd:contains('药品类别管理')").trigger("click");
+					}
+				}
+			});
+		}
+
+	}
+	//修改
+	function updateDrug(id){
+		/* $.get("/drug/"+id,{},function(data){
+			for(var i=0;i<data.length;i++){
+				var name = data[i].name;
+				var id = data[i].id;
+				console.log("name",name);
+				console.log("id",id);
+				$("#categorySel").append('<option value='+id+'>'+name+'</option>');
+			}
+		}); */
+		$.get("/drug/"+id,{},function(data){
+			$("#drugForm input[name='name']").val(data.name);
+			$("#drugForm input[name='id']").val(data.id);
+			$("#drugForm input[name='barcode']").val(data.barcode);
+			$("#drugForm input[name='description']").val(data.description);
+			$("#drugForm input[name='dosageform']").val(data.dosageform);
+			$("#drugForm input[name='specifications']").val(data.specifications);
+			$("#drugForm input[name='prime_cost']").val(data.prime_cost);
+			$("#drugForm input[name='price']").val(data.price);
+			$("#drugForm input[name='inventory']").val(data.inventory);
+			$("#drugForm input[name='minimum']").val(data.minimum);
+			$("#drugForm input[name='unit']").val(data.unit);
+			var f = $("#drugForm option[value='"+data.category.id+"']");
+			f.attr("selected","selected");
+			$("#drugModal").modal('show');
+			$(".modal-header .modal-title").text("修改医用药品类别");
+		});
+		$(".modal-footer .submitBtn").on("click",function(){
+			$("#drugForm").attr("action","drug");
+			$("#drugForm input[name=_method]").attr("value", "PUT");
+			$("#drugForm input:submit").trigger("click");
+		});
+		$("#drugForm").ajaxForm(function(data){
+			$("#drugModal").modal('hide');
+			alert(data);
+			setTimeout(function(){
+				$(".menu dd:contains('医用药品管理')").trigger("click");
+			},200);	
+		});
+	}
+	//取药
+	function medicineGetting(){
+		/* var id = $(".dataTable input[type='checkbox']:checked").val();
+		$.get("selectDrugById",{id:id},function(data){
+			$("#dForm input[name='name']").val(data.name);
+			$("#dForm input[name='id']").val(data.id);
+
+		}); */
+		$("#dModal").modal('show');
+		$("#dModal .submitBtn").on("click",function(){
+			$("#dForm").attr("action","medicineGetting");
+			$("#dForm").attr("method","PUT");
+			$("#dForm input:submit").trigger('click');
+		});
+		$("#dForm").ajaxForm(function(data){
+			$("#dModal").modal('hide');
+			if(data!="OK"){
+				alert(data);
+			}else {
+				alert("取药成功");
+				// 延时加载，防止模态框消失动作冲突
+				setTimeout(function() {
+					$(".menu dd:contains('医用药品管理')").trigger("click");
+				}, 200);
+			}
+
+		});
+	}
+	//入库
+	function medicineStorge(){
+		//var id = $(".dataTable input[type='checkbox']:checked").val();
+		/* $.get("selectDrugById",{id:id},function(data){
+			$("#dForm input[name='name']").val(data.name);
+			$("#dForm input[name='id']").val(data.id);
+
+		}); */
+		$("#dModal").modal('show');
+		//修改标题 
+		$(".modal-content .modal-title").text("入库");
+		$("#dModal .submitBtn").on("click",function(){
+			$("#dForm").attr("action","medicineStorge");
+			$("#dForm").attr("method","GET");
+			$("#dForm input:submit").trigger('click');
+		});
+		$("#dForm").ajaxForm(function(data){
+			$("#dModal").modal('hide');
+			if (data ==null) {
+				alert("入库失败，药品名称不存在");
+			} else {
+				alert("入库成功");
+				// 延时加载，防止模态框消失动作冲突
+				setTimeout(function() {
+					$(".menu dd:contains('医用药品管理')").trigger("click");
+				}, 500);
+			}
+		});
+	}
+	
+	//分页
+	function pageSelect(page,size){
+		var url = "/drug?page="+page+"&size="+size;
+		$(".b_main").load(url);
+	}
+	// 模态框取消
+	function cancel() {
+		$("#drugModal").modal('hide');
+		$("#drugForm").get(0).reset();
+		$("#dModal").modal('hide');
+		$("#dForm").get(0).reset();
+	}
+</script>
+
+<div class="drug">
+	<div class="optios">
+		<button class="addBtn" onclick="addDrug()">添加</button>
+		<button class="deleteBatch">批量删除</button>
+		<button class="medicineGetting" onclick="medicineGetting()">取药</button>
+		<button class="storge" onclick="medicineStorge()">入库</button>
+	</div>
+	<div class="data">
+		<table class="dataTable table table-striped table-bordered">
+			<thead>
+				<tr>
+					<th>请选择</th>
+					<th>编号</th>
+					<th>名称</th>
+					<th>药品类别</th>
+					<th>条形码</th>
+					<th>剂型</th>
+					<th>规格</th>
+					<th>单位</th>
+					<th>进货价</th>
+					<th>零售价</th>
+					<th>库存量</th>
+					<th>库存下限</th>
+					<th>简介</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="drug:${session.page.content}">
+					<td><input type="checkbox" th:value="${drug.id}"/></td>
+					<td th:text="${drug.id}">1</td>
+					<td th:text="${drug.name}">克咳胶囊</td>
+					<td th:text="${drug.category.id}">5.5</td>
+					<td th:text="${drug.barcode}">感冒发热</td>
+					<td th:text="${drug.dosageform}">胶囊剂</td>
+					<td th:text="${drug.specifications}">0.3g*12粒</td>
+					<td th:text="${drug.unit}">盒</td>
+					<td th:text="${drug.prime_cost}">4.0</td>
+					<td th:text="${drug.price}">140</td>
+					<td th:text="${drug.inventory}">20</td>
+					<td th:text="${drug.minimum}">【商品名称】克咳胶囊(运动员慎用)</td>
+					<td th:text="${drug.description}">6923959408694</td>
+					<td>
+						<a href="javascript:void(0)" th:onclick="|deleteDrug(${drug.id})|">删除</a>
+						<a href="javascript:void(0)" th:onclick="|updateDrug(${drug.id})|">修改</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<table class="footTable">
+			<tr>
+				<td colspan="5">共<font th:text="${session.page.totalElements}">20</font>条记录
+					每页<font th:text="${session.page.size}">5</font>条 第<font
+					th:text="${session.page.number}+1">1</font>页 <a
+					href="javascript:void(0)"
+					th:onclick="|pageSelect(0,${session.page.size})|">首页</a> <a
+					href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.number}-1,${session.page.size})|" th:if="${session.page.isFirst()}==false">上一页</a>
+					<!-- 如果要方法后面要传值用"/里面输入方法和值/" -->
+					<font color="#ABA8AB" th:if="${session.page.isFirst()}==true">上一页</font> <a href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.number}+1,${session.page.size})|" th:if="${session.page.isLast()}==false">下一页</a>
+					<font color="#ABA8AB" th:if="${session.page.isLast()}==true">下一页</font> <a href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.totalPages}-1,${session.page.size})|">尾页</a>
+				</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<!-- 模态框 -->
+<div class="modal fade" tabindex="-1" role="dialog" id="drugModal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">添加药品</h4>
+      </div>
+      <div class="modal-body">
+        <form action="/drug" id="drugForm" method="post">
+        <input type="hidden" name="_method" value="">
+			<table>
+				<tbody>
+					<tr>
+						<td style="width:80px">药品名称</td>
+						<td><input type="text" name="name"/>
+							<input type="hidden" name="id">
+						</td>
+					</tr>
+					<tr>
+						<td style="width:80px">请输入条形码</td>
+						<td>
+						<input type="text" name="barcode">
+						</td>
+					</tr>
+					<tr>
+						<td>药品描述</td>
+						<td>
+							<input type="text" name="description">
+						</td>
+					</tr>
+					<tr>
+						<td>药剂</td>
+						<td>
+							<input type="text" name="dosageform">
+						</td>
+					</tr>
+					<tr>
+						<td>规格</td>
+						<td>
+							<input type="text" name="specifications">
+						</td>
+					</tr>
+					<tr>
+						<td>药品单位</td>
+						<td>
+							<input type="text" name="unit">
+						</td>
+					</tr>
+					<tr>
+						<td>所属类别</td>
+						<td>
+							<select name="category.id" id="categorySel">
+								<option value="">---请选择---</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>进货价</td>
+						<td>
+							<input type="text" name="prime_cost">
+						</td>
+					</tr>
+					<tr>
+						<td>出售价</td>
+						<td>
+							<input type="text" name="price">
+						</td>
+					</tr>
+					<tr>
+						<td>库存量</td>
+						<td>
+							<input type="text" name="inventory">
+						</td>
+					</tr>
+					<tr>
+						<td>库存下限</td>
+						<td>
+							<input type="text" name="minimum">
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<input type="submit" style="display:none">
+			<input type="reset" style="display: none">
+		</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default cancelBtn" onclick="cancel()">取消</button>
+        <button type="button" class="btn btn-primary submitBtn">保存</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+
+<!-- 模态框 -->
+<div class="modal fade" tabindex="-1" role="dialog" id="dModal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">取药</h4>
+      </div>
+      <div class="modal-body">
+        <form action="" id="dForm">
+        <input type="hidden" name="_method" value="">
+			<table>
+				<tbody>
+					<tr>
+						<td style="width:80px">药品名称</td>
+						<td><input type="text" name="name"/>
+							<input type="hidden" name="id">
+						</td>
+					</tr>
+					<tr>
+						<td style="width:80px">取除数量</td>
+						<td>
+						<input type="text" name="inventory">
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<input type="submit" style="display:none">
+			<input type="reset" style="display: none">
+		</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default cancelBtn" onclick="cancel()">取消</button>
+        <button type="button" class="btn btn-primary submitBtn">保存</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+
+
+
+

@@ -1,0 +1,14 @@
+server:
+  port: 8088
+ 
+spring:
+  datasource: 
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://188.131.251.228:3306/hos
+    username: root
+    password: briup123
+  jpa:  
+    database-platform: org.hibernate.dialect.MySQL5Dialect
+    
+
+

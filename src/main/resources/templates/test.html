@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<!-- 判断session中某个值，进行区域隐藏和显示控制
+		注：当th:if中的表达式满足时，<th:block>中的html元素会被显示
+	 -->
+	 
+	 <th:block th:if="${session.name} == 'jack' ">
+	 	<h1>Hello World!</h1>
+	 	<h1>Hello World!</h1>
+	 	<h1>Hello World!</h1>
+	 	<h1>Hello World!</h1>
+	 	<h1>Hello World!</h1>
+	 	<h1>Hello World!</h1>
+	 </th:block>
+	 
+	 
+	欢迎您，<font th:text="${session.name}">张三！</font>	
+	<font th:text="${session.user.role.id}">张三！</font>	
+	<!-- thymeleaf循环 -->
+	<table border="1" th:each="user:${session.userlist}">
+		<tr>
+			<td th:text="${user.id}"></td>
+			<td th:text="${user.name}"></td>
+			<td th:text="${user.gender}"></td>
+			<td th:text="${#dates.format(user.birth,'yyyy-mm-dd')}"></td>
+		<tr>
+	</table>
+		
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<script>
+	//添加
+	$.get("selectDept",{},function(data){
+			for(var i=0;i<data.length;i++){
+				var id = data[i].id;
+				var name = data[i].name;
+				$("#deptSelect").append('<option value='+id+'>'+name+'</option>');
+			}
+
+		});
+	$("#deptSelect").change(function(){
+		$("#deptSelect option:selected").each(function(){
+			var id = $(this).val();
+			$.get("findUserWithDeptByDeptId",{id:id},function(data){
+				var selection = document.getElementById("userSelect");
+				selection.innerHTML = '<option value="">请选择</option>';
+				for(var i=0;i<data.length;i++){
+					var id = data[i].id;
+					var name = data[i].name;
+					$("#userSelect").append('<option value='+id+'>'+name+'</option>');
+				}
+			});
+		});
+	}); 
+	//指定要使用时间控件的元素 
+	laydate.render({
+		elem:"#birth"
+	});
+	function addRegister(){
+		$("#registerForm input[name=id]").val("");
+			//清空表单内容
+		$("#registerForm input[type=reset]").trigger("click");
+			//清空redio选中
+		$("#registerForm input[type=radio]").attr("checked",false);
+		$("#registerModal").modal('show');
+			//修改标题 
+		$(".modal-header .modal-title").text("添加挂号");
+
+		$(".modal-footer .submitBtn").on("click",function(){
+			$("#registerForm").attr("method","POST");
+			$("#registerForm input:submit").trigger("click");
+		});
+		$("#registerForm").ajaxForm(function(data){
+			$("#registerModal").modal("hide");
+			if (data != 'OK') {
+				alert(data);
+			} else {
+				alert("操作成功");
+				// 延时加载，防止模态框消失动作冲突
+				setTimeout(function() {
+					$(".menu dd:contains('门诊挂号')").trigger("click");
+				}, 250);
+			}	
+		});
+	}
+	$(function(){
+		//批量删除
+ 		$(".optios .deleteBatch").on("click",function(){
+ 			var ids = $(".dataTable input[type='checkbox']:checked").map(function(index,item){
+				return $(item).val();
+			}).get();
+			jQuery.ajaxSetup({
+				traditional:true// ids数组可以被后台接收到
+			});
+			/* $.post("deleteRegister",{ids:ids},function(data){
+				alert(data);
+				$(".menu dd:contains('门诊挂号')").trigger("click");
+			}); */
+			var str="";
+			for(i=0;i<ids.length;i++){
+				str=i==ids.length-1?str+ids[i]:str+ids[i]+",";
+			}
+			var result=confirm("确认要删除"+str+"这些药品吗？"); 
+			if(result){
+				$.ajax({
+					url : "/register",
+					type : "POST",
+					data : {
+						ids : ids,
+						_method : "DELETE"
+					},
+					success : function(data) {
+						alert(data);
+						// 删除成功后，更新页面信息
+						$(".menu dd:contains('门诊挂号')").trigger("click");
+					}
+				});
+			}
+		});
+
+	});
+	//删除
+	function deleteRegister(id){
+		/* $.post("deleteRegister",{id:id},function(data){
+			alert(data);
+			$(".menu dd:contains('门诊挂号')").trigger("click");
+		}); */
+		var result=confirm("确认删除该门诊吗？");
+		if(result==true){
+			$.ajax({
+				url : "/register/" + id,
+				type : "DELETE",
+				success : function(data) {
+					if (data == 'OK') {
+						alert("操作成功！");
+						$(".menu dd:contains('门诊挂号')").trigger("click");
+					}
+				}
+			});
+		}
+	}
+	//修改
+	/*
+		$("#registerForm input[name='patient.id']").val(data.patient.id);
+			$("#registerForm input[name='name']").val(data.patient.name);
+			$("#registerForm input[name='price']").val(data.price);
+			$("#registerForm input[name='date']").val(data.date);
+			var radio1 = $("#registerForm input[value='未处理']");
+			var radio2 = $("#registerForm input[value='已处理']");
+			if(data.status=='未处理'){
+				radio1.attr("checked","checked");
+			}else{
+				radio2.attr("checked","checked");
+			}
+	*/
+	function updateRegister(id){
+		/* $("#deptSelect").change(function(){
+			$("#deptSelect option:selected").each(function(){
+				var id = $(this).val();
+			$.get("findUserWithDeptByDeptId",{id:id},function(data){
+				var selection = document.getElementById("userSelect");
+				selection.innerHTML = "";
+				for(var i=0;i<data.length;i++){
+					var id = data[i].id;
+					var name = data[i].name;
+					$("#userSelect").append('<option value='+id+'>'+name+'</option>');
+				}
+			});
+			});
+		}); */
+		$.get("/register/"+id,{},function(data){
+			$("#registerForm input[name='patient.id']").val(data.patient.id);
+			$("#registerForm input[name='name']").val(data.patient.name);
+			$("#registerForm input[name='price']").val(data.price);
+			var dateObj=new Date(data.date);
+			var year=dateObj.getFullYear();
+			var month=dateObj.getMonth()+1;
+			var date=dateObj.getDate();
+			month=month.toString().length==1?"0"+month:month;
+			date=date.toString().length==1?"0"+date:date;
+			$("#registerForm input[name='date']").val(year+"-"+month+"-"+date);
+			var radio1 = $("#registerForm input[value='未处理']");
+			var radio2 = $("#registerForm input[value='已处理']");
+			if(data.status=='未处理'){
+				radio1.attr("checked","checked");
+			}else{
+				radio2.attr("checked","checked");
+			}
+			$(".modal-header .modal-title").text("修改挂号");
+			$("#registerModal").modal('show');
+		});
+		$(".modal-footer .submitBtn").on("click",function(){
+			$("#registerForm").attr("action","register");
+			$("#registerForm input[name=_method]").attr("value", "PUT");
+			$("#registerForm input:submit").trigger("click");
+		});
+		$("#registerForm").ajaxForm(function(data){
+			$("#registerModal").modal('hide');
+			alert(data);
+			setTimeout(function(){
+				$(".menu dd:contains('门诊挂号')").trigger("click");
+			},200);	
+		});
+
+	}
+	//分页
+	function pageSelect(page,size){
+		var url = "/register?page="+page+"&size="+size;
+		$(".b_main").load(url);
+	}
+	// 模态框取消
+	function cancel() {
+		$("#registerModal").modal('hide');
+		$("#registerForm").get(0).reset();
+	}
+</script>
+<div class="register">
+	<div class="optios">
+		<button class="addBtn" onclick="addRegister()">添加</button>
+		<button class="deleteBatch">批量删除</button>
+	</div>
+	<div class="data">
+		<table class="dataTable table table-striped table-bordered">
+			<thead>
+				<tr>
+					<th>请选择</th>
+					<th>患者流水号</th>
+					<th>病人姓名</th>
+					<th>部门名称</th>
+					<th>所属医生</th>
+					<th>挂号费</th>
+					<th>挂号日期</th>
+					<th>状态</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="userPatient:${session.page.content}">
+					
+					<td><input type="checkbox" th:value="${userPatient.id}"/></td>
+					<td th:text="${userPatient.patient.id}">1</td>
+					<td th:text="${userPatient.patient.name}">眼科</td>
+					<td th:text="${userPatient.user.department.name}">眼科</td>
+					<td th:text="${userPatient.user.name}">张医生</td>
+					<td th:text="${userPatient.price}">5.0</td>
+					<td th:text="${#dates.format(userPatient.date,'yyyy-MM-dd')}">
+						2018-03-27
+					</td>
+					<td th:text="${userPatient.status}">
+						未处理
+					</td>
+					<td>
+						<a href="javascript:void(0)" th:onclick="|deleteRegister(${userPatient.id})|">删除</a>
+						<a href="javascript:void(0)" th:onclick="|updateRegister(${userPatient.id})|">修改</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<table class="footTable">
+			<tr>
+				<td colspan="5">共<font th:text="${session.page.totalElements}">20</font>条记录
+					每页<font th:text="${session.page.size}">5</font>条 第<font
+					th:text="${session.page.number}+1">1</font>页 <a
+					href="javascript:void(0)"
+					th:onclick="|pageSelect(0,${session.page.size})|">首页</a> <a
+					href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.number}-1,${session.page.size})|" th:if="${session.page.isFirst()}==false">上一页</a>
+					<!-- 如果要方法后面要传值用"/里面输入方法和值/" -->
+					<font color="#ABA8AB" th:if="${session.page.isFirst()}==true">上一页</font> <a href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.number}+1,${session.page.size})|" th:if="${session.page.isLast()}==false">下一页</a>
+					<font color="#ABA8AB" th:if="${session.page.isLast()}==true">下一页</font> <a href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.totalPages}-1,${session.page.size})|">尾页</a>
+				</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<!-- 模态框 -->
+<div class="modal fade" tabindex="-1" role="dialog" id="registerModal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">添加挂号</h4>
+      </div>
+      <div class="modal-body">
+        <form action="/register" id="registerForm" method="post">
+        <input type="hidden" name="_method" value="">
+			<table>
+				<tbody>
+					<tr>
+						<td style="width:80px">患者流水号</td>
+						<td><input type="text" name="patient.id"/>
+						</td>
+					</tr>
+					<tr>
+						<td style="width:80px">病人姓名</td>
+						<td>
+							<input type="text" name="name">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							部门
+						</td>
+						<td>
+							<select name="deptid" id="deptSelect">
+								<option value="">---请选择---</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							所属医生
+						</td>
+						<td>
+							<select name="user.id" id="userSelect">
+								<option value="">请选择</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>挂号费</td>
+						<td>
+							<input type="text" name="price">
+						</td>
+					</tr>
+					<tr>
+						<td>挂号日期</td>
+						<td>
+							<input type="text" name="date" id="birth">
+						</td>
+
+					</tr>
+					<tr>
+						<td>状态</td>
+						<td>
+						<label for="no">
+							<input id="no" name="status" type="radio" value="未处理">未处理
+						</label>
+						<label for="yes">
+							<input id="yes" name="status" type="radio" value="已处理">已处理
+						</label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<input type="submit" style="display:none">
+			<input type="reset" style="display: none">
+		</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default cancelBtn" onclick="cancel()">取消</button>
+        <button type="button" class="btn btn-primary submitBtn">保存</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>

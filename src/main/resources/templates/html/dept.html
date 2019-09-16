@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<script>
+	$(function() {
+		//先清除掉所有的绑定事件 
+		$(".addBtn").off();
+		// 点击添加按钮触发的事件
+		$(".addBtn").on("click", function() {
+			$("#deptForm input[name=id]").val("");
+			//清空表单内容
+			$("#deptForm input[type=reset]").trigger("click");
+			//清空redio选中
+			$("#deptForm input[type=radio]").attr("checked",false);
+			// 显示模态框
+			$("#deptModal").modal('show');
+			//修改标题 
+			$(".modal-header .modal-title").text("添加部门"); 
+			
+			// 为模态框中的[保存]按钮绑定点击事件
+			$(".modal-footer .submitBtn").on("click", function() {
+
+				// 动态修改表单提交路径
+				$("#deptForm").attr("action", "/dept");
+
+				// 修改提交方式为POST
+				$("#deptForm").attr("method", "POST")
+				//$("#deptForm input[name=_method]").att("value","POST");
+				// 获取到表单中隐藏的提交按钮，触发点击事件
+				// 等同于$("#deptForm").submit()
+				$("#deptForm input:submit").trigger("click");
+
+			});
+
+			// 使用ajaxForm插件处理响应信息
+			$("#deptForm").ajaxForm(function(data) {
+				// 隐藏模态框
+				$("#deptModal").modal('hide');
+				if (data != 'OK') {
+					alert(data);
+				} else {
+					alert('操作成功！');
+					// 延时加载，防止模态框消失动作冲突
+					setTimeout(function() {
+						// 模拟点击左侧导航栏[部门管理]菜单，等同于重新加载页面
+						$(".menu dd:contains('部门管理')").trigger("click");
+					}, 200);
+				}
+			});
+		});
+
+		//批量删除
+		$(".deleteBatch").on(
+				"click",
+				
+				function() {
+					// map函数用于为一个jQuery对象中的所有DOM元素执行批量操作
+					// 函数中获取了每个input标签的value值
+					// get()函数把最终的结果转化成一个js数组，用于向后台发送
+					var ids = $(".dataTable input[type='checkbox']:checked")
+							.map(function(index, item) {
+								return $(item).val();
+							}).get();
+
+					// ajaxSetup()函数用于设置Ajax全局配置
+					jQuery.ajaxSetup({
+						// ids数组可以被后台接收到
+						traditional : true
+					});
+					var str="";
+					for(i=0;i<ids.length;i++){
+						str=i==ids.length-1?str+ids[i]:str+ids[i]+",";
+					}
+					var result=confirm("确认要删除"+str+"这些部门吗？"); 
+					if(result){
+						$.ajax({
+							url : "/dept",
+							type : "POST",
+							data : {
+								ids : ids,
+								_method : "DELETE"
+							},
+							success : function(data) {
+								alert(data);
+								// 删除成功后，更新页面信息
+								$(".menu dd:contains('部门管理')").trigger("click");
+							}
+						});
+					}
+					// 发送请求，参数为所有需要删除的部门ID				
+				});
+	});
+
+	//删除
+	function deleteDept(id) {
+		//弹窗让用户确认操作
+		var result=confirm("确认删除该部门吗？");
+		if(result==true){
+			$.ajax({
+				url : "/dept/" + id,
+				type : "DELETE",
+				success : function(data) {
+					if (data == 'OK') {
+						alert("操作成功！");
+						$(".menu dd:contains('部门管理')").trigger("click");
+					}
+				}
+			});
+		}
+
+	}
+
+	//修改
+	function updateDept(id) {
+		//先查出对应的本门显示到模态框中
+		$.get("/dept/" + id, {}, function(data) {
+			$("#deptForm input[name='name']").val(data.name);
+			$("#deptForm input[name='id']").val(data.id);
+			$("#deptForm input[name='description']").val(data.description);
+			var radio1 = $("#deptForm input[value='是']");
+			var radio2 = $("#deptForm input[value='否']");
+			if (data.status == '是') {
+				radio1.attr("checked", "checked");
+			}else{
+				radio2.attr("checked", "checked");
+			}
+			// 添加部门和修改部门实际上用的是同一个模态框
+			// 所以打开前先修改模态框标题
+			$(".modal-header .modal-title").text("修改部门");
+			// 显示模态框
+			$("#deptModal").modal('show');
+		});
+		$("#deptModal .submitBtn").off();
+		$("#deptModal .submitBtn").on("click", function() {
+			$("#deptForm").attr("action", "dept");
+			$("#deptForm input[name=_method]").attr("value", "PUT");
+			$("#deptForm input:submit").trigger("click");
+		});
+		$("#deptForm").ajaxForm(function(data) {
+			$("#deptModal").modal('hide');
+			alert(data);
+			setTimeout(function(){
+				$(".menu dd:contains('部门管理')").trigger("click");
+			},500);
+		});
+	}
+
+	//分页
+	function pageSelect(page, size) {
+		var url = "/dept?page="+page+"&size="+size;
+		$(".b_main").load(url);
+	}
+	/* 
+	load(url)      --GET请求
+	load(url,param)  --POST请求 
+	*/
+
+	// 模态框取消
+	function cancel() {
+		$("#deptModal").modal('hide');
+		$("#deptForm").get(0).reset();
+	}
+</script>
+<div class="dept">
+	<div class="">
+	部门名称：<input type="text">
+	部门：<input type="text">
+	</div>
+	<div class="optios">
+		<button class="addBtn">添加</button>
+		<button class="deleteBatch">批量删除</button>
+	</div>
+	<div class="data">
+		<table class="dataTable table table-striped table-bordered">
+			<thead>
+				<tr>
+					<th>请选择</th>
+					<th>编号</th>
+					<th>部门名称</th>
+					<th>是否可以挂号</th>
+					<th>部门描述</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="dept:${session.page.content}">
+					<td><input type="checkbox" th:value="${dept.id}" value="" /></td>
+					<td th:text="${dept.id}">1</td>
+					<td th:text="${dept.name}">信息中心</td>
+					<td th:text="${dept.status}">是</td>
+					<td th:text="${dept.description}">暂无描述信息...</td>
+					<td><a href="javascript:void(0)"
+						th:onclick="|deleteDept(${dept.id})|">删除</a> <a
+						href="javascript:void(0)" th:onclick="|updateDept(${dept.id})|">修改</a></td>
+				</tr>
+			</tbody>
+		</table>
+		<table class="footTable">
+			<tr>
+				<td colspan="5">共<font th:text="${session.page.totalElements}">20</font>条记录
+					每页<font th:text="${session.page.size}">5</font>条 第<font
+					th:text="${session.page.number}+1">1</font>页 <a
+					href="javascript:void(0)"
+					th:onclick="|pageSelect(0,${session.page.size})|">首页</a> <a
+					href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.number}-1,${session.page.size})|" th:if="${session.page.isFirst()}==false">上一页</a>
+					<!-- 如果要方法后面要传值用"/里面输入方法和值/" -->
+					<font color="#ABA8AB" th:if="${session.page.isFirst()}==true">上一页</font> <a href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.number}+1,${session.page.size})|" th:if="${session.page.isLast()}==false">下一页</a>
+					<font color="#ABA8AB" th:if="${session.page.isLast()}==true">下一页</font> <a href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.totalPages}-1,${session.page.size})|">尾页</a>
+				</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<!-- 模态框 -->
+<div class="modal fade" tabindex="-1" role="dialog" id="deptModal">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"
+					aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title">添加部门</h4>
+			</div>
+			<div class="modal-body">
+				<form action="/dept" id="deptForm" method="post">
+
+					<!-- 用于发送PUT和DELETE请求 -->
+					<input type="hidden" name="_method" value="">
+
+					<table>
+						<tbody>
+							<tr>
+								<td style="width: 80px">部门名称</td>
+								<td><input type="text" name="name" /> <input type="hidden"
+									name="id"></td>
+							</tr>
+							<tr>
+								<td style="width: 80px">是否可挂号</td>
+								<td><label for="yes"> <input id="yes" type="radio"
+										name="status" value="是" />是
+								</label> <label for="no"> <input id="no" type="radio"
+										name="status" value="否">否
+								</label></td>
+							</tr>
+							<tr>
+								<td>描述</td>
+								<td><input type="text" name="description"></td>
+							</tr>
+						</tbody>
+					</table>
+					<input type="submit" style="display: none"> <input
+						type="reset" style="display: none">
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default cancelBtn"
+					onclick="cancel()">取消</button>
+				<button type="button" class="btn btn-primary submitBtn">保存</button>
+			</div>
+		</div>
+		<!-- /.modal-content -->
+	</div>
+	<!-- /.modal-dialog -->
+</div>
+
+</html>

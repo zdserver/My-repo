@@ -1,0 +1,306 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<script type="text/javascript">
+	$(function(){
+		//指定要使用时间控件的元素 
+		laydate.render({
+			elem:"#birth"
+		});
+		$(".addBtn").off();
+ 		//添加
+ 		$(".addBtn").on("click",function(){
+ 			$("#patientForm input[name=id]").val("");
+ 			//清空表单内容
+ 			$("#patientForm input[type=reset]").trigger("click");
+ 			//清空redio选中
+ 			$("#patientForm input[type=radio]").attr("checked",false);
+ 			//点击添加模态框显示
+ 			$("#patientModal").modal('show');
+ 			//修改标题 
+ 			$(".modal-header .modal-title").text("添加病人"); 
+ 		});
+ 		//点击模态框中的保存，模拟点击form表单的提交按钮
+		$(".modal-footer .submitBtn").on("click",function(){
+			$("#patientForm").attr("action","/patient");
+			$("#patientForm").attr("method", "POST");
+			$("#patientForm input:submit").trigger("click");
+		});
+		$("#patientForm").ajaxForm(function(data){
+			$("#patientModal").modal('hide');
+			if (data != 'OK') {
+				alert(data);
+			} else {
+				alert('操作成功！');
+				// 延时加载，防止模态框消失动作冲突
+				setTimeout(function() {
+					// 模拟点击左侧导航栏[部门管理]菜单，等同于重新加载页面
+					$(".menu dd:contains('病人基本信息管理') ").trigger("click");
+				},200);
+			}
+		});
+		//批量删除
+		$(".deleteBatch").on("click",function(){
+			var ids = $(".dataTable input[type='checkbox']:checked").map(function(index,item){
+				return $(item).val();
+			}).get();
+			jQuery.ajaxSetup({
+				traditional:true// ids数组可以被后台接收到
+			});
+			var str="";
+			for(i=0;i<ids.length;i++){
+				str=i==ids.length-1?str+ids[i]:str+ids[i]+",";
+			}
+			var result=confirm("确认要删除"+str+"这些病人吗？"); 
+			if(result){
+				$.ajax({
+					url : "/patient",
+					type : "POST",
+					data : {
+						ids : ids,
+						_method : "DELETE"
+					},
+					success : function(data) {
+						alert(data);
+						// 删除成功后，更新页面信息
+						$(".menu dd:contains('病人基本信息管理')").trigger("click");
+					}
+				});
+			}
+		});
+	});
+	//删除
+	function deletePatient(id){
+		/* $.post("deletePatient",{id:id},function(data){
+			alert(data);
+			$(".menu dd:contains('病人基本信息管理')").trigger("click");
+		}); */
+		var result=confirm("确认删除该病人吗？");
+		if(result){
+			$.ajax({
+				url : "/patient/" + id,
+				type : "DELETE",
+				success : function(data) {
+					if (data == 'OK') {
+						alert("删除成功");
+						$(".menu dd:contains('病人基本信息管理')").trigger("click");
+					}
+				}
+			});
+		}
+	}
+	//修改
+	function updatePatient(id){
+		//先查出对应的本门显示到模态框中
+		$.get("/patient/"+id,{},function(data){
+			$("#patientForm input[name='name']").val(data.name);
+			$("#patientForm input[name='id']").val(data.id);
+			$("#patientForm input[name='age']").val(data.age);
+			//1.先更具是兼职创建js中的date对象
+			var dateObj=new Date(data.birth);
+			var year=dateObj.getFullYear();
+			var month=dateObj.getMonth()+1;
+			var date=dateObj.getDate();
+			month=month.toString().length==1?"0"+month:month;
+			date=date.toString().length==1?"0"+date:date;
+			//2.凭借指定格式的字符串
+			$("#patientForm input[name='birth']").val(year+"-"+month+"-"+date);
+			$("#patientForm input[name='merriage']").val(data.merriage);
+			$("#patientForm input[name='address']").val(data.address);
+			$("#patientForm input[name='drugAllergy']").val(data.drugAllergy);
+			$("#patientForm input[name='cardNo']").val(data.cardNo);
+			$("#patientForm input[name='balance']").val(data.balance);
+			var radio1 = $("#patientForm input[value='男']");
+			var radio2 = $("#patientForm input[value='女']");
+			if(data.gender=='男'){
+				radio1.attr("checked","checked");
+			}else{
+				radio2.attr("checked","checked");
+			}
+			$(".modal-header .modal-title").text("添加病人");
+			$("#patientModal").modal('show');
+		});
+		$("#patientModal .submitBtn").off();
+		$("#patientModal .submitBtn").on("click",function(){
+			//$("#patientForm").attr("action","patient");
+			$("#patientForm input[name=_method]").attr("value", "PUT");
+			$("#patientForm input:submit").trigger("click");
+		});
+		$("#patientForm").ajaxForm(function(data){
+			$("patientModal").modal('hide');
+			alert(data);
+			setTimeout(function(){
+				$(".menu dd:contains('病人基本信息管理')").trigger("click");
+			},500);
+		});
+	}
+	
+	//分页
+	function pageSelect(page, size) {
+		var url = "/patient?page="+page+"&size="+size;
+		$(".b_main").load(url);
+	}
+	// 模态框取消
+	function cancel() {
+		$("#patientModal").modal('hide');
+		$("#patientForm").get(0).reset();
+	}
+</script>
+<div class="patient">
+	<div class="optios">
+		<button class="addBtn" onclick="addPatient()">添加</button>
+		<button class="deleteBatch">批量删除</button>
+	</div>
+	<div class="data">
+		<table class="dataTable table table-striped table-bordered">
+			<thead>
+				<tr>
+					<th>请选择</th>
+					<th>患者流水号</th>
+					<th>姓名</th>
+					<th>年龄</th>
+					<th>性别</th>
+					<th>出生日期</th>
+					<th>婚姻</th>
+					<th>住址</th>
+					<th>过敏史</th>
+					<th>卡号</th>
+					<th>余额</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="patient:${session.page.content}">
+					<td><input type="checkbox" th:value="${patient.id }" value=""/></td>
+					<td th:text="${patient.id}">1</td>
+					<td th:text="${patient.name}">张三</td>
+					<td th:text="${patient.age}">12</td>
+					<td th:text="${patient.gender}">女</td>
+					<td th:text="${#dates.format(patient.birth,'yyyy-MM-dd')}">2018-03-27</td>
+					<td th:text="${patient.merriage}">未婚</td>
+					<td th:text="${patient.address}">昆山</td>
+					<td th:text="${patient.drugAllergy}">无</td>
+					<td th:text="${patient.cardNo}">1001</td>
+					<td th:text="${patient.balance}">200.0</td>
+					<td>
+						<a href="javascript:void(0)" th:onclick="|deletePatient(${patient.id})|">删除</a>
+						<a href="javascript:void(0)" th:onclick="|updatePatient(${patient.id})|">修改</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<table class="footTable">
+			<tr>
+				<td colspan="5">共<font th:text="${session.page.totalElements}">20</font>条记录
+					每页<font th:text="${session.page.size}">5</font>条 第<font
+					th:text="${session.page.number}+1">1</font>页 <a
+					href="javascript:void(0)"
+					th:onclick="|pageSelect(0,${session.page.size})|">首页</a> <a
+					href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.number}-1,${session.page.size})|" th:if="${session.page.isFirst()}==false">上一页</a>
+					<!-- 如果要方法后面要传值用"/里面输入方法和值/" -->
+					<font color="#ABA8AB" th:if="${session.page.isFirst()}==true">上一页</font> <a href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.number}+1,${session.page.size})|" th:if="${session.page.isLast()}==false">下一页</a>
+					<font color="#ABA8AB" th:if="${session.page.isLast()}==true">下一页</font> <a href="javascript:void(0)"
+					th:onclick="|pageSelect(${session.page.totalPages}-1,${session.page.size})|">尾页</a>
+					<!-- <font th:text="${session.page.totalPages}" style="display: none" id="getPages">页数</font>
+					<font>跳转到
+						<select th:onchange="|pageSelect(this.value,5)|" id="selectPage" >
+						</select>
+						页
+					</font> -->
+					
+				</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+
+<!-- 模态框 -->
+<div class="modal fade" tabindex="-1" role="dialog" id="patientModal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">添加病人</h4>
+      </div>
+      <div class="modal-body">
+        <form action="/patient" id="patientForm" method="post">
+       	 <input type="hidden" name="_method" value="">
+			<table>
+				<tbody>
+					<tr>
+						<td style="width:80px">姓名</td>
+						<td><input type="text" name="name"/>
+							<input type="hidden" name="id">
+						</td>
+					</tr>
+					<tr>
+						<td style="width:80px">性别</td>
+						<td>
+						<label for="male">
+							<input id="male" type="radio" name="gender" value="男"/>男
+						</label>
+						<label for="female">
+							<input id="female" type="radio" name="gender" value="女">女
+						</label>
+						</td>
+					</tr>
+					<tr>
+						<td>年龄</td>
+						<td>
+							<input type="text" name="age">
+						</td>
+					</tr>
+					<tr>
+						<td>出生日期</td>
+						<td>
+							<input type="text" name="birth" id="birth">
+						</td>
+					</tr>
+					<tr>
+						<td>婚姻状况</td>
+						<td>
+							<input type="text" name="merriage">
+						</td>
+					</tr>
+					<tr>
+						<td>家庭地址</td>
+						<td>
+							<input type="text" name="address">
+						</td>
+					</tr>
+					<tr>
+						<td>过敏史</td>
+						<td>
+							<input type="text" name="drugAllergy">
+						</td>
+					</tr>
+					<tr>
+						<td>卡号</td>
+						<td>
+							<input type="text" name="cardNo"><font color="red" th:text="${msg}">${msg }</font>
+						</td>
+					</tr>
+					<tr>
+						<td>余额</td>
+						<td>
+							<input type="text" name="balance">
+						</td>
+					</tr>
+
+				</tbody>
+			</table>
+			<input type="submit" style="display:none">
+			<input type="reset" style="display: none">
+		</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default cancelBtn" onclick="cancel()">取消</button>
+        <button type="button" class="btn btn-primary submitBtn">保存</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+</head>
+</html>

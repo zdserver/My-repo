@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>XXX管理系统</title>
+	<!-- jquery基础库 -->
+	<script type="text/javascript" th:src="@{jquery-3.3.1.min.js}" src="../static/jquery-3.3.1.min.js"></script>
+	<!-- jquery表单异步提交库 -->
+	<script type="text/javascript" th:src="@{jquery.form.min.js}" src="../static/jquery.form.min.js"></script>
+	<!-- bootstrap js -->
+	<script type="text/javascript" th:src="@{bootstrap-3.3.7/js/bootstrap.min.js}" src="../static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+	<!-- laydate js -->
+	<script type="text/javascript" th:src="@{laydate/laydate.js}" src="../static/laydate/laydate.js"></script>
+	<!-- bootstrap css -->
+	<link rel="stylesheet" th:href="@{bootstrap-3.3.7/css/bootstrap.min.css}" href="../static/bootstrap-3.3.7/css/bootstrap.min.css">
+	<!-- laydate css -->
+	<link rel="stylesheet" th:href="@{laydate/theme/default/laydate.css}" href="../static/laydate/theme/default/laydate.css">
+	<!-- font-awesome -->
+	<link rel="stylesheet" th:href="@{font-awesome-4.7.0/css/font-awesome.css}" href="../static/font-awesome-4.7.0/css/font-awesome.css">
+	<!-- 自定义JS -->
+	<script type="text/javascript" th:src="@{js/index.js}" src="../static/js/index.js"></script>
+	<!-- 自定义CSS -->
+	<link rel="stylesheet" th:href="@{css/layout.css}" href="../static/css/layout.css">
+	<script type="text/javascript">
+		$(function(){
+			$('#logout').on('click',function(){
+				$.ajax({
+					url:"/user/logout"
+				});
+				window.location.href="login";
+			});
+		});
+	</script>
+</head>
+<body>
+
+
+
+	<div class="b_container">
+		<!-- 头部开始 -->
+		<div class="b_header">
+			<div class="logo">
+				<i class="fa fa-hospital-o"></i>	医院管理系统
+				<!-- <i >当前在线人数</i>
+				<i th:text="${applicationScope.count }"></i> -->
+			</div>
+			<div class="loginInfo">
+				<a id="logout" href="javascript:void(0)"><font color="white">退出</font></a> &nbsp;
+				&nbsp;欢迎您, <font th:text="${session.user.role.name}">超级管理员！</font> 
+			</div>
+		</div>
+		<!-- 头部结束 -->
+		<!-- 内容区开始 -->
+		<div class="b_content">
+			<div class="b_left">
+				<dl class="menu">
+					<!-- 当if为true，则显示th:block代码块标签的所有内容 -->
+					<th:block th:if="${session.user.role.id}==1 or ${session.user.role.id}==8">
+					<dt><i class="fa fw fa-user-o"></i><a href="#">角色1：医生</a></dt>
+					<dd url='html/nodealPatient'><a href="#">科室未处理病人</a></dd>
+					<dd url='html/dealedPatient'><a href="#">已处理挂号病人</a></dd>
+					<dd url='html/prescription'><a href="#">开处方</a></dd>
+					<dd url='html/selectPrescription'><a href="#">处方查询</a></dd>
+					<dd url='html/check'><a href="#">开检查</a></dd>
+					<dd url='html/selectCheck'><a href="#">检查查询</a></dd>
+					<dd url='html/diagnosis'><a href="#">诊断病人</a></dd>
+					<dd url='html/MedicalRecordSelect'><a href="#">病例档案查询</a></dd>
+					</th:block>
+					
+					<th:block th:if="${session.user.role.id}==2 or ${session.user.role.id}==8">
+					<dt><i class="fa fw fa-ambulance"></i><a href="#">角色2：医技人员</a></dt>
+					<dd url='html/pe'><a href="#">辅助检查项目管理</a></dd>
+					<dd url='html/entryCheckResult'><a href="#">录入检查结果</a></dd>
+					</th:block>
+					
+					<th:block th:if="${session.user.role.id}==3 or ${session.user.role.id}==8">
+					<dt><i class="fa fw fa-plus-square"></i><a href="#">角色3：护士</a></dt>
+					<dd url='html/MedicalRecordSelect'><a href="#">病例档案查询</a></dd>
+					<dd url='html/selectPrescription'><a href="#">处方查询</a></dd>
+					<dd url='html/selectCheck'><a href="#">检查查询</a></dd>
+					</th:block>
+					
+					<th:block th:if="${session.user.role.id}==4 or ${session.user.role.id}==8">
+					<dt><i class="fa fw fa-hand-o-right"></i><a href="#">角色4：导医</a></dt>
+					<dd url='/patient'><a href="#">病人基本信息管理</a></dd>
+					</th:block>
+					
+					<th:block th:if="${session.user.role.id}==5 or ${session.user.role.id}==8">
+					<dt><i class="fa fw fa-cny"></i><a href="#">角色5：门诊收费员</a></dt>
+					<dd url='/register'><a href="#">门诊挂号</a></dd>
+					<dd url='/dealcard'><a href="#">就诊卡充值退费</a></dd>
+					</th:block>
+					
+					<th:block th:if="${session.user.role.id}==6 or ${session.user.role.id}==8">
+					<dt><i class="fa fw fa-pencil"></i><a href="#">角色6：药房管理员</a></dt>
+					<dd url='/category'><a href="#">药品类别管理</a></dd>
+					<dd url='/drug'><a href="#">医用药品管理</a></dd>
+					</th:block>
+					<!--url是静态的就会直接跳转到指定的资源页面，如果不是静态的就会被拦截经过处理在跳转   -->
+					<th:block th:if="${session.user.role.id}==7 or ${session.user.role.id}==8">
+					<dt><i class="fa fw fa-address-book-o"></i><a href="#">角色7：字典维护人员</a></dt>
+					<dd url='/dept'><a href="#">部门管理</a></dd>
+					<dd url='/user'><a href="#">职工管理</a></dd>
+					<dd url='html/pe'><a href="#">辅助检查项目管理</a></dd>
+					</th:block>
+				</dl>
+			</div>
+			<div class="b_right">
+				<div class="b_tip">
+					>
+				</div>
+				<!-- 动态内容区 -->
+				<div class="b_main">
+					<!--内容区  -->
+					
+				</div>
+			</div>
+		</div>
+		<!-- 内容区结束 -->
+		<!-- 底部开始 -->
+		<div class="b_footer">
+			版权所有：杰普软件科技有限公司
+		</div>
+		<!-- 底部结束 -->
+	</div>
+</body>
+</html>
